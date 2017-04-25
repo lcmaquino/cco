@@ -16,5 +16,9 @@ int main(){
     c.display();
     cout << "---" << endl;
 
+    c.insert(2, 4.2, 4.4, 4.6);
+    c.display();
+    cout << "---" << endl;
+
     return 0;
 }

@@ -5,7 +5,7 @@
 using namespace std;
 
 struct segment{
-  int id, left, right;
+  int id, up, left, right;
   double beta_l, beta_r, Q, x, y, z;
 };
 

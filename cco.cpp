@@ -3,6 +3,7 @@
 CCO::CCO(double Q, double x, double y, double z) {
     segment root;
     root.id = 0;
+    root.up = -1;
     root.left = -1;
     root.right = -1;
     root.beta_l = 1.0;
@@ -23,8 +24,11 @@ void CCO::insert(int id, double x, double y, double z){
     segment inew, ibif, icon;
 
     icon.id = tree.size();
+    icon.up = id;
     icon.left = tree[id].left;
+    if (tree[id].left != -1) tree[tree[id].left].id = icon.id;
     icon.right = tree[id].right;
+    if (tree[id].right != -1) tree[tree[id].right].id = icon.id;
     icon.beta_l = tree[id].beta_l;
     icon.beta_r = tree[id].beta_r;
     icon.Q = tree[id].Q;
@@ -34,6 +38,7 @@ void CCO::insert(int id, double x, double y, double z){
     tree.push_back(icon);
 
     inew.id = tree.size();
+    inew.up = id;
     inew.left = -1;
     inew.right = -1;
     inew.beta_l = 1.0;
@@ -56,6 +61,6 @@ void CCO::insert(int id, double x, double y, double z){
 void CCO::display(){
     for(vector<segment>::iterator it = tree.begin(); it != tree.end(); ++it){
         cout << "(id = " << (*it).id << ", (" << (*it).x <<  ", " << (*it).y <<  ", "  
-             << (*it).z << "), " << (*it).left << ", " << (*it).right << " )" << endl;
+             << (*it).z << "), " << (*it).up << ", " << (*it).left << ", " << (*it).right << " )" << endl;
     }
 }
