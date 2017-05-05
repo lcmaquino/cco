@@ -2,11 +2,20 @@
 
 int main(){
     double pperf = 100.0, pterm = 60.0, Qperf = 500.0, gamma = 3.0;
+    int N_term = 10;
 
-    CCO c(Qperf, 1.0, 1.0, 1.0);
+    CCO c(N_term, pperf, pterm, Qperf, gamma);
 
     c.display();
     cout << "---" << endl;
+
+    c.insert(0, 2.2, 2.4, 2.6);
+    c.display();
+    cout << "---" << endl;;
+
+    c.remove();
+    c.display();
+    cout << "---" << endl;;
 
     c.insert(0, 2.2, 2.4, 2.6);
     c.display();
@@ -17,6 +26,18 @@ int main(){
     cout << "---" << endl;
 
     c.insert(2, 4.2, 4.4, 4.6);
+    c.display();
+    cout << "---" << endl;
+
+    c.insert(3, 5.2, 5.4, 5.6);
+    c.display();
+    cout << "---" << endl;
+
+    c.remove();
+    c.display();
+    cout << "---" << endl;
+
+    c.remove();
     c.display();
     cout << "---" << endl;
 
