@@ -128,10 +128,12 @@ void CCO::update(int id){
     	i_up = tree[i].up;
         if (i_up != -1) {
         	length = sqrt((tree[i].x - tree[i_up].x)*(tree[i].x - tree[i_up].x)
-    				  + (tree[i].y - tree[i_up].y)*(tree[i].y - tree[i_up].y) + (tree[i].z - tree[i_up].z));
+    				  + (tree[i].y - tree[i_up].y)*(tree[i].y - tree[i_up].y)
+					  + (tree[i].z - tree[i_up].z)*(tree[i].z - tree[i_up].z));
         }else{
         	length = sqrt((tree[i].x - ox)*(tree[i].x - ox)
-    				  + (tree[i].y - oy)*(tree[i].y - oy) + (tree[i].z - oz));
+    				  + (tree[i].y - oy)*(tree[i].y - oy)
+					  + (tree[i].z - oz)*(tree[i].z - oz));
         }
     	if (i_left == -1 && i_right == -1){
     		tree[i].beta_l = 1.0;
