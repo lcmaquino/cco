@@ -2,13 +2,14 @@
 
 int main(){
     double pperf = 100.0, pterm = 60.0, Qperf = 500.0, gamma = 3.0;
-    int N_term = 10;
+    int N_term = 5;
 
     CCO c(N_term, pperf, pterm, Qperf, gamma);
 
+    c.generate_tree();
     c.display();
     cout << "---" << endl;
-
+    /*
     c.insert(0, 2.2, 2.4, 2.6);
     c.display();
     cout << "---" << endl;;
@@ -40,6 +41,6 @@ int main(){
     c.remove();
     c.display();
     cout << "---" << endl;
-
+	*/
     return 0;
 }

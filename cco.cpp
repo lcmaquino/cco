@@ -55,10 +55,10 @@ void CCO::insert(int id, double x, double y, double z){
     icon.z = tree[id].z;
     if (tree[id].up != -1) {
     	length = sqrt((tree[id].x - tree[tree[id].up].x)*(tree[id].x - tree[tree[id].up].x)
-				  + (tree[id].y - tree[tree[id].up].y)*(tree[id].y - tree[tree[id].up].y) + (tree[id].z - tree[tree[id].up].z));
+				  + (tree[id].y - tree[tree[id].up].y)*(tree[id].y - tree[tree[id].up].y) + (tree[id].z - tree[tree[id].up].z)*(tree[id].z - tree[tree[id].up].z));
     }else{
     	length = sqrt((tree[id].x - ox)*(tree[id].x - ox)
-				  + (tree[id].y - oy)*(tree[id].y - oy) + (tree[id].z - oz));
+				  + (tree[id].y - oy)*(tree[id].y - oy) + (tree[id].z - oz)*(tree[id].z - oz));
     }
     icon.reduced_resistance = tree[id].reduced_resistance - 0.5*poiseuille_law_constant*length;
     tree.push_back(icon);
@@ -150,15 +150,23 @@ void CCO::update(int id){
 }
 
 void CCO::generate_tree(void){
-	double x, y, z, min_dist = 0.0, dist;
-
-	for (int i = 0; i < 2*N_term - 2; i++){
+	double x, y, z, smin_dist, sdist, tol = 0.0000000001;
+	int id_min_dist;
+	for (int i = 0; i < N_term - 1; i++){
 		x = dis(gen);
 		y = dis(gen);
 		z = dis(gen);
+		smin_dist = 1.0;
+		id_min_dist = 0;
 		for(vector<segment>::iterator it = tree.begin(); it != tree.end(); ++it){
-			;
+			sdist = ((*it).x - x)*((*it).x - x) + ((*it).y - y)*((*it).y - y)
+					+ ((*it).z - z)*((*it).z - z);
+			if (fabs(sdist - smin_dist) < tol) {
+				id_min_dist = (*it).id;
+				smin_dist = sdist;
+			}
 		}
+		insert(id_min_dist, x, y, z);
 	}
 }
 
