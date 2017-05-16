@@ -17,10 +17,9 @@ struct segment{
 class CCO {
 private:
     vector<segment> tree;
-    vector<point> points;
     mt19937 gen;
     uniform_real_distribution<> dis;
-    int segment_count, N_term;
+    int N_term;
     double ox, oy, oz, perfusion_pressure, terminal_pressure, gamma;
     const double viscosity_of_blood = 3.6;
     const double poiseuille_law_constant = 8.0*viscosity_of_blood/M_PI;
@@ -34,4 +33,6 @@ public:
     double flow_splitting_ratio(int id);
     void update(int id);
     void generate_tree(void);
+    void save(string filename = "cco_tree.txt");
+    void open(string filename = "cco_tree.txt");
 };

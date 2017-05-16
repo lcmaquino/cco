@@ -1,4 +1,7 @@
 #include "cco.h"
+#include <fstream>
+#include <sstream>
+#include <string>
 
 CCO::CCO(int Nt, double pperf, double pterm, double Qperf, double gam) {
     segment root;
@@ -30,7 +33,6 @@ CCO::CCO(int Nt, double pperf, double pterm, double Qperf, double gam) {
     root.Q = Qperf;
     tree.push_back(root);
 
-    segment_count = 1;
 }
 
 CCO::~CCO() {
@@ -80,7 +82,6 @@ void CCO::insert(int id, double x, double y, double z){
     inew.reduced_resistance = poiseuille_law_constant*sqrt((x - tree[id].x)*(x - tree[id].x)
     						  + (y - tree[id].y)*(y - tree[id].y) + (z - tree[id].z)*(z - tree[id].z));
     tree.push_back(inew);
-    segment_count += 2;
 
     tree[id].left = icon.id;
     tree[id].right = inew.id;
@@ -102,7 +103,6 @@ void CCO::remove(void){
 
 	tree.pop_back();
 	tree.pop_back();
-	segment_count -= 2;
 
 	update(id_up);
 }
@@ -178,5 +178,52 @@ void CCO::display(){
              << (*it).z << "), " << (*it).up << ", " << (*it).left << ", "
 			 << (*it).right << ", " << (*it).reduced_resistance << ", "
 			 << (*it).beta_l << ", " << (*it).beta_r << " )" << endl;
+    }
+}
+
+void CCO::save(string filename){
+    ofstream treefile;
+    treefile.open(filename);
+    if (treefile.is_open()) {
+        treefile << N_term << " " << ox << " " << oy << " " << oz << " "
+        << perfusion_pressure << " " << terminal_pressure << " "
+        << gamma << endl;
+        for(vector<segment>::iterator it = tree.begin(); it != tree.end(); ++it){
+            treefile << (*it).x << " " << (*it).y << " " << (*it).z << " " 
+            << (*it).up << " " << (*it).left << " " << (*it).right << " " 
+            << (*it).reduced_resistance  << " " << (*it).beta_l << " " 
+            << (*it).beta_r  << " " << endl;
+        }
+        treefile.close();
+    }else{
+        cout << "Unable to open \"" << filename << "\"." << endl;
+    }
+}
+
+void CCO::open(string filename){
+    ifstream treefile;
+    string line;
+    treefile.open(filename);
+    if (treefile.is_open()) {
+        getline(treefile, line);
+        istringstream iss(line);
+        iss >> N_term >> ox >> oy >>  oz >> perfusion_pressure
+        >> terminal_pressure >> gamma;
+        int i = 0;
+        while (getline(treefile, line)) {
+            istringstream iss(line);
+            if (i == 0) {
+                iss >> tree[0].x >> tree[0].y >> tree[0].z >> tree[0].up >> tree[0].left >> tree[0].right >> tree[0].reduced_resistance >> tree[0].beta_l >> tree[0].beta_r;
+            }else{
+                segment s;
+                s.id = i;
+                iss >> s.x >> s.y >> s.z >> s.up >> s.left >> s.right >> s.reduced_resistance >> s.beta_l >> s.beta_r;
+                tree.push_back(s);
+            }
+            i++;
+        }
+        treefile.close();
+    }else{
+        cout << "Unable to open \"" << filename << "\"." << endl;
     }
 }

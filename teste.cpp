@@ -6,9 +6,13 @@ int main(){
 
     CCO c(N_term, pperf, pterm, Qperf, gamma);
 
-    c.generate_tree();
+    //c.generate_tree();
+    c.open();
     c.display();
     cout << "---" << endl;
+
+    //c.save();
+
     /*
     c.insert(0, 2.2, 2.4, 2.6);
     c.display();
