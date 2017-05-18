@@ -64,9 +64,15 @@ void CCO::insert(int id, double x, double y, double z){
     icon.reduced_resistance = tree[id].reduced_resistance - 0.5*poiseuille_law_constant*length;
     tree.push_back(icon);
 
-    tree[id].x /= 2.0;
-    tree[id].y /= 2.0;
-    tree[id].z /= 2.0;
+    if (id == 0) {
+        tree[id].x = (tree[id].x + ox)/2.0;
+        tree[id].y = (tree[id].y + oy)/2.0;
+        tree[id].z = (tree[id].z + oz)/2.0;
+    }else{
+        tree[id].x = (tree[id].x + tree[tree[id].up].x)/2.0;
+        tree[id].y = (tree[id].y + tree[tree[id].up].y)/2.0;
+        tree[id].z = (tree[id].z + tree[tree[id].up].z)/2.0;
+    }
 
     inew.id = tree.size();
     inew.up = id;
@@ -91,10 +97,21 @@ void CCO::insert(int id, double x, double y, double z){
 void CCO::remove(void){
 	int id = tree.size() - 2, id_left = tree[id].left, id_right = tree[id].right,
 		id_up = tree[id].up;
-
-	tree[id_up].x *= 2.0;
-	tree[id_up].y *= 2.0;
-	tree[id_up].z *= 2.0;
+    if (id == 0) {
+    	tree[id_up].x *= 2.0;
+    	tree[id_up].y *= 2.0;
+    	tree[id_up].z *= 2.0;
+    	tree[id_up].x -= ox;
+    	tree[id_up].y -= oy;
+    	tree[id_up].z -= oz;
+    }else{
+    	tree[id_up].x *= 2.0;
+    	tree[id_up].y *= 2.0;
+    	tree[id_up].z *= 2.0;
+    	tree[id_up].x -= tree[tree[id_up].up].x;
+    	tree[id_up].y -= tree[tree[id_up].up].y;
+    	tree[id_up].z -= tree[tree[id_up].up].z;
+    }
 	tree[id_up].left = id_left;
 	tree[id_up].right = id_right;
 	tree[id_left].up = id_up;
@@ -120,12 +137,11 @@ double CCO::flow_splitting_ratio(int id){
 
 void CCO::update(int id){
 	double radii_ratio, radii_ratio_pow, length;
-	int i, i_left, i_right, i_up;
+	int i, i_left, i_right;
     for(i = id; i != -1; i = tree[i].up){
     	i_left = tree[i].left;
     	i_right = tree[i].right;
-    	i_up = tree[i].up;
-        length = get_length(id);
+        length = get_length(i);
     	if (i_left == -1 && i_right == -1){
     		tree[i].beta_l = 1.0;
     		tree[i].beta_r = 1.0;
@@ -170,6 +186,19 @@ void CCO::display(){
 			 << (*it).right << ", " << (*it).reduced_resistance << ", "
 			 << (*it).beta_l << ", " << (*it).beta_r << " )" << endl;
     }
+}
+
+void CCO::set_origin(double x, double y, double z){
+	ox = x;
+	oy = y;
+	oz = z;
+}
+
+void CCO::set_root_end(double x, double y, double z){
+	tree[0].x = x;
+	tree[0].y = y;
+	tree[0].z = z;
+	update(0);
 }
 
 double CCO::get_length(int id){

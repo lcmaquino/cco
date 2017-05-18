@@ -39,4 +39,6 @@ public:
     void save(string filename = "cco_tree.txt");
     void saveVTK(string filename = "cco_tree.vtk");
     void open(string filename = "cco_tree.txt");
+    void set_origin(double x, double y, double z);
+    void set_root_end(double x, double y, double z);
 };

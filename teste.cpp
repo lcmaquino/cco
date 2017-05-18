@@ -2,17 +2,29 @@
 
 int main(){
     double pperf = 100.0, pterm = 60.0, Qperf = 500.0, gamma = 3.0;
-    int N_term = 5;
+    int N_term = 2;
 
-    //CCO c(N_term, pperf, pterm, Qperf, gamma);
+    CCO c(N_term, pperf, pterm, Qperf, gamma);
     //c.generate_tree();
-    //c.save();
 
-    CCO c("cco_tree_9_exemplo2.txt");
-    //c.saveVTK();
-
+    c.set_origin(0.0, 1.0, 0.0);
+    c.set_root_end(0.0, 0.0, 0.0);
     c.display();
     cout << "---" << endl;
+
+    c.insert(0, 0.5, 0.0, 0.0);
+    c.display();
+    cout << "---" << endl;
+
+    c.insert(1, -0.4, -0.6, 0.0);
+    c.display();
+    cout << "---" << endl;
+
+    //c.save("cco_tree_3_exemplo1.txt");
+
+    //CCO c("cco_tree_9_exemplo2.txt");
+    //c.saveVTK("cco_tree_3_exemplo1.vtk");
+
 
     /*
     c.insert(0, 2.2, 2.4, 2.6);
