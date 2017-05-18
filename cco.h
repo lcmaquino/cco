@@ -20,11 +20,14 @@ private:
     mt19937 gen;
     uniform_real_distribution<> dis;
     int N_term;
-    double ox, oy, oz, perfusion_pressure, terminal_pressure, gamma;
+    double ox, oy, oz, perfusion_pressure, terminal_pressure, perfusion_flow, gamma;
     const double viscosity_of_blood = 3.6;
     const double poiseuille_law_constant = 8.0*viscosity_of_blood/M_PI;
     int number_of_terminals(int id);
+    double get_radius(int id);
+    double get_length(int id);
 public:
+    CCO(string filename);
     CCO(int Nt, double pperf, double pterm, double Qperf, double gam);
     ~CCO();
     void display();
@@ -34,5 +37,6 @@ public:
     void update(int id);
     void generate_tree(void);
     void save(string filename = "cco_tree.txt");
+    void saveVTK(string filename = "cco_tree.vtk");
     void open(string filename = "cco_tree.txt");
 };

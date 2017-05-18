@@ -4,14 +4,15 @@ int main(){
     double pperf = 100.0, pterm = 60.0, Qperf = 500.0, gamma = 3.0;
     int N_term = 5;
 
-    CCO c(N_term, pperf, pterm, Qperf, gamma);
-
+    //CCO c(N_term, pperf, pterm, Qperf, gamma);
     //c.generate_tree();
-    c.open();
+    //c.save();
+
+    CCO c("cco_tree_9_exemplo2.txt");
+    //c.saveVTK();
+
     c.display();
     cout << "---" << endl;
-
-    //c.save();
 
     /*
     c.insert(0, 2.2, 2.4, 2.6);

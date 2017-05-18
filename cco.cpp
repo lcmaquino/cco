@@ -3,6 +3,10 @@
 #include <sstream>
 #include <string>
 
+CCO::CCO(string filename) {
+	open(filename);
+}
+
 CCO::CCO(int Nt, double pperf, double pterm, double Qperf, double gam) {
     segment root;
 
@@ -18,6 +22,7 @@ CCO::CCO(int Nt, double pperf, double pterm, double Qperf, double gam) {
     gamma = gam;
     perfusion_pressure = pperf;
     terminal_pressure = pterm;
+    perfusion_flow = Qperf;
 
     root.id = 0;
     root.up = -1;
@@ -55,13 +60,7 @@ void CCO::insert(int id, double x, double y, double z){
     icon.x = tree[id].x;
     icon.y = tree[id].y;
     icon.z = tree[id].z;
-    if (tree[id].up != -1) {
-    	length = sqrt((tree[id].x - tree[tree[id].up].x)*(tree[id].x - tree[tree[id].up].x)
-				  + (tree[id].y - tree[tree[id].up].y)*(tree[id].y - tree[tree[id].up].y) + (tree[id].z - tree[tree[id].up].z)*(tree[id].z - tree[tree[id].up].z));
-    }else{
-    	length = sqrt((tree[id].x - ox)*(tree[id].x - ox)
-				  + (tree[id].y - oy)*(tree[id].y - oy) + (tree[id].z - oz)*(tree[id].z - oz));
-    }
+    length = get_length(id);
     icon.reduced_resistance = tree[id].reduced_resistance - 0.5*poiseuille_law_constant*length;
     tree.push_back(icon);
 
@@ -126,15 +125,7 @@ void CCO::update(int id){
     	i_left = tree[i].left;
     	i_right = tree[i].right;
     	i_up = tree[i].up;
-        if (i_up != -1) {
-        	length = sqrt((tree[i].x - tree[i_up].x)*(tree[i].x - tree[i_up].x)
-    				  + (tree[i].y - tree[i_up].y)*(tree[i].y - tree[i_up].y)
-					  + (tree[i].z - tree[i_up].z)*(tree[i].z - tree[i_up].z));
-        }else{
-        	length = sqrt((tree[i].x - ox)*(tree[i].x - ox)
-    				  + (tree[i].y - oy)*(tree[i].y - oy)
-					  + (tree[i].z - oz)*(tree[i].z - oz));
-        }
+        length = get_length(id);
     	if (i_left == -1 && i_right == -1){
     		tree[i].beta_l = 1.0;
     		tree[i].beta_r = 1.0;
@@ -181,13 +172,82 @@ void CCO::display(){
     }
 }
 
+double CCO::get_length(int id){
+	double length;
+	int id_up;
+	id_up = tree[id].up;
+	if (id_up != -1) {
+		length = sqrt((tree[id].x - tree[id_up].x)*(tree[id].x - tree[id_up].x)
+				  + (tree[id].y - tree[id_up].y)*(tree[id].y - tree[id_up].y)
+				  + (tree[id].z - tree[id_up].z)*(tree[id].z - tree[id_up].z));
+	}else{
+		length = sqrt((tree[id].x - ox)*(tree[id].x - ox)
+				  + (tree[id].y - oy)*(tree[id].y - oy)
+				  + (tree[id].z - oz)*(tree[id].z - oz));
+	}
+	return length;
+}
+
+double CCO::get_radius(int id){
+    double r_root = pow(tree[0].reduced_resistance*perfusion_flow/
+    					(perfusion_pressure - terminal_pressure), 0.25);
+    if (id == 0) {
+    	return r_root;
+    }else{
+    	if (tree[tree[id].up].left == id)
+    		return tree[tree[id].up].beta_l*get_radius(tree[id].up);
+    	else
+    		return tree[tree[id].up].beta_r*get_radius(tree[id].up);
+    }
+}
+
+void CCO::saveVTK(string filename){
+    ofstream treefile;
+    int N_segments = tree.size();
+    treefile.open(filename);
+    if (treefile.is_open()) {
+        treefile << "# vtk DataFile Version 3.0" << endl;
+        treefile << "vtk output" << endl;
+        treefile << "ASCII" << endl;
+        treefile << "DATASET POLYDATA" << endl;
+        treefile << "POINTS  " << N_segments + 1 << "  float" << endl;
+        treefile << ox << "  " << oy << "  " << oz << endl;
+        for(vector<segment>::iterator it = tree.begin(); it != tree.end(); ++it){
+            treefile << (*it).x << "  " << (*it).y << "  " << (*it).z << endl;
+        }
+        treefile << endl;
+        treefile << "LINES  " << N_segments << "  " << 3*N_segments << endl;
+        treefile << "2  0  1" << endl;
+        for(vector<segment>::iterator it = tree.begin(); it != tree.end(); ++it){
+        	if ((*it).left != -1 && (*it).right != -1) {
+                treefile << "2  " << (*it).id + 1 << "  " << (*it).left + 1 << endl;
+                treefile << "2  " << (*it).id + 1 << "  " << (*it).right + 1 << endl;
+        	}
+        }
+        treefile << endl;
+		treefile << "CELL_DATA  " << N_segments << endl;
+		treefile << "scalars radius float" << endl;
+		treefile << "LOOKUP_TABLE default" << endl;
+		treefile << get_radius(0) << endl;
+        for(vector<segment>::iterator it = tree.begin(); it != tree.end(); ++it){
+        	if ((*it).left != -1 && (*it).right != -1) {
+                treefile << get_radius((*it).left) << endl;
+                treefile << get_radius((*it).right) << endl;
+        	}
+        }
+        treefile.close();
+    }else{
+        cout << "Unable to open \"" << filename << "\"." << endl;
+    }
+}
+
 void CCO::save(string filename){
     ofstream treefile;
     treefile.open(filename);
     if (treefile.is_open()) {
         treefile << N_term << " " << ox << " " << oy << " " << oz << " "
         << perfusion_pressure << " " << terminal_pressure << " "
-        << gamma << endl;
+		<< perfusion_flow << " " << gamma << endl;
         for(vector<segment>::iterator it = tree.begin(); it != tree.end(); ++it){
             treefile << (*it).x << " " << (*it).y << " " << (*it).z << " " 
             << (*it).up << " " << (*it).left << " " << (*it).right << " " 
@@ -208,18 +268,15 @@ void CCO::open(string filename){
         getline(treefile, line);
         istringstream iss(line);
         iss >> N_term >> ox >> oy >>  oz >> perfusion_pressure
-        >> terminal_pressure >> gamma;
+        >> terminal_pressure >> perfusion_flow >> gamma;
+        tree.reserve(2*N_term - 1);
         int i = 0;
         while (getline(treefile, line)) {
             istringstream iss(line);
-            if (i == 0) {
-                iss >> tree[0].x >> tree[0].y >> tree[0].z >> tree[0].up >> tree[0].left >> tree[0].right >> tree[0].reduced_resistance >> tree[0].beta_l >> tree[0].beta_r;
-            }else{
-                segment s;
-                s.id = i;
-                iss >> s.x >> s.y >> s.z >> s.up >> s.left >> s.right >> s.reduced_resistance >> s.beta_l >> s.beta_r;
-                tree.push_back(s);
-            }
+			segment s;
+			s.id = i;
+			iss >> s.x >> s.y >> s.z >> s.up >> s.left >> s.right >> s.reduced_resistance >> s.beta_l >> s.beta_r;
+			tree.push_back(s);
             i++;
         }
         treefile.close();
