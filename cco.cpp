@@ -97,7 +97,7 @@ void CCO::insert(int id, double x, double y, double z){
 void CCO::remove(void){
 	int id = tree.size() - 2, id_left = tree[id].left, id_right = tree[id].right,
 		id_up = tree[id].up;
-    if (id == 0) {
+    if (id == 1) {
     	tree[id_up].x *= 2.0;
     	tree[id_up].y *= 2.0;
     	tree[id_up].z *= 2.0;
@@ -165,16 +165,23 @@ void CCO::generate_tree(void){
 		x = dis(gen);
 		y = dis(gen);
 		z = dis(gen);
-		smin_dist = 1.0;
-		id_min_dist = 0;
+		//cout << x << ", " << y << ", " << z << endl;
 		for(vector<segment>::iterator it = tree.begin(); it != tree.end(); ++it){
 			sdist = ((*it).x - x)*((*it).x - x) + ((*it).y - y)*((*it).y - y)
 					+ ((*it).z - z)*((*it).z - z);
-			if (fabs(sdist - smin_dist) < tol) {
-				id_min_dist = (*it).id;
+			//cout << sdist << ", " << (*it).id << ", " << (*it).x << ", " << (*it).y << ", " << (*it).z << endl;
+			if ((*it).id == 0) {
+				id_min_dist = 0;
 				smin_dist = sdist;
+			} else {
+				if (sdist < smin_dist) {
+					id_min_dist = (*it).id;
+					smin_dist = sdist;
+				}
 			}
 		}
+		//cout << id_min_dist << ", " << smin_dist << endl;
+		//cout << "---" << endl;
 		insert(id_min_dist, x, y, z);
 	}
 }
