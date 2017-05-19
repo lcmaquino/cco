@@ -7,7 +7,7 @@ CCO::CCO(string filename) {
 	open(filename);
 }
 
-CCO::CCO(int Nt, double pperf, double pterm, double Qperf, double gam) {
+CCO::CCO(int Nt, int Nc, double pperf, double pterm, double Qperf, double gam) {
     segment root;
 
     random_device rd;
@@ -15,6 +15,7 @@ CCO::CCO(int Nt, double pperf, double pterm, double Qperf, double gam) {
 
     N_term = Nt;
     tree.reserve(2*N_term - 1);
+    N_con = Nc;
 
     ox = dis(gen);
     oy = dis(gen);
@@ -24,10 +25,10 @@ CCO::CCO(int Nt, double pperf, double pterm, double Qperf, double gam) {
     terminal_pressure = pterm;
     perfusion_flow = Qperf;
 
-    root.id = 0;
-    root.up = -1;
-    root.left = -1;
-    root.right = -1;
+    root.id = ROOT;
+    root.up = TERMINAL_ENDS;
+    root.left = TERMINAL_ENDS;
+    root.right = TERMINAL_ENDS;
     root.beta_l = 1.0;
     root.beta_r = 1.0;
     root.x = dis(gen);
@@ -49,8 +50,8 @@ void CCO::insert(int id, double x, double y, double z){
     double length;
 
     icon.id = tree.size();
-    if (tree[id].left != -1) tree[tree[id].left].up = icon.id;
-    if (tree[id].right != -1) tree[tree[id].right].up = icon.id;
+    if (tree[id].left != TERMINAL_ENDS) tree[tree[id].left].up = icon.id;
+    if (tree[id].right != TERMINAL_ENDS) tree[tree[id].right].up = icon.id;
     icon.up = id;
     icon.left = tree[id].left;
     icon.right = tree[id].right;
@@ -64,7 +65,7 @@ void CCO::insert(int id, double x, double y, double z){
     icon.reduced_resistance = tree[id].reduced_resistance - 0.5*poiseuille_law_constant*length;
     tree.push_back(icon);
 
-    if (id == 0) {
+    if (id == ROOT) {
         tree[id].x = (tree[id].x + ox)/2.0;
         tree[id].y = (tree[id].y + oy)/2.0;
         tree[id].z = (tree[id].z + oz)/2.0;
@@ -76,8 +77,8 @@ void CCO::insert(int id, double x, double y, double z){
 
     inew.id = tree.size();
     inew.up = id;
-    inew.left = -1;
-    inew.right = -1;
+    inew.left = TERMINAL_ENDS;
+    inew.right = TERMINAL_ENDS;
     inew.beta_l = 1.0;
     inew.beta_r = 1.0;
     inew.x = x;
@@ -123,8 +124,12 @@ void CCO::remove(void){
 	update(id_up);
 }
 
+bool CCO::is_terminal(int id){
+	return (tree[id].left == TERMINAL_ENDS && tree[id].right == TERMINAL_ENDS);
+}
+
 int CCO::number_of_terminals(int id){
-	if (tree[id].left == -1 && tree[id].right == -1){
+	if (is_terminal(id)){
 		return 1;
 	}else{
 		return number_of_terminals(tree[id].left) + number_of_terminals(tree[id].right);
@@ -138,11 +143,11 @@ double CCO::flow_splitting_ratio(int id){
 void CCO::update(int id){
 	double radii_ratio, radii_ratio_pow, length;
 	int i, i_left, i_right;
-    for(i = id; i != -1; i = tree[i].up){
+    for(i = id; i != TERMINAL_ENDS; i = tree[i].up){
     	i_left = tree[i].left;
     	i_right = tree[i].right;
         length = get_length(i);
-    	if (i_left == -1 && i_right == -1){
+    	if (is_terminal(i)){
     		tree[i].beta_l = 1.0;
     		tree[i].beta_r = 1.0;
             tree[i].reduced_resistance = poiseuille_law_constant*length;
@@ -159,7 +164,7 @@ void CCO::update(int id){
 }
 
 void CCO::generate_tree(void){
-	double x, y, z, smin_dist, sdist, tol = 0.0000000001;
+	double x, y, z, smin_dist, sdist;
 	int id_min_dist;
 	for (int i = 0; i < N_term - 1; i++){
 		x = dis(gen);
@@ -170,7 +175,7 @@ void CCO::generate_tree(void){
 			sdist = ((*it).x - x)*((*it).x - x) + ((*it).y - y)*((*it).y - y)
 					+ ((*it).z - z)*((*it).z - z);
 			//cout << sdist << ", " << (*it).id << ", " << (*it).x << ", " << (*it).y << ", " << (*it).z << endl;
-			if ((*it).id == 0) {
+			if ((*it).id == ROOT) {
 				id_min_dist = 0;
 				smin_dist = sdist;
 			} else {
@@ -202,17 +207,17 @@ void CCO::set_origin(double x, double y, double z){
 }
 
 void CCO::set_root_end(double x, double y, double z){
-	tree[0].x = x;
-	tree[0].y = y;
-	tree[0].z = z;
-	update(0);
+	tree[ROOT].x = x;
+	tree[ROOT].y = y;
+	tree[ROOT].z = z;
+	update(ROOT);
 }
 
 double CCO::get_length(int id){
 	double length;
 	int id_up;
 	id_up = tree[id].up;
-	if (id_up != -1) {
+	if (id_up != TERMINAL_ENDS) {
 		length = sqrt((tree[id].x - tree[id_up].x)*(tree[id].x - tree[id_up].x)
 				  + (tree[id].y - tree[id_up].y)*(tree[id].y - tree[id_up].y)
 				  + (tree[id].z - tree[id_up].z)*(tree[id].z - tree[id_up].z));
@@ -225,9 +230,9 @@ double CCO::get_length(int id){
 }
 
 double CCO::get_radius(int id){
-    double r_root = pow(tree[0].reduced_resistance*perfusion_flow/
+    double r_root = pow(tree[ROOT].reduced_resistance*perfusion_flow/
     					(perfusion_pressure - terminal_pressure), 0.25);
-    if (id == 0) {
+    if (id == ROOT) {
     	return r_root;
     }else{
     	if (tree[tree[id].up].left == id)
@@ -255,7 +260,7 @@ void CCO::saveVTK(string filename){
         treefile << "LINES  " << N_segments << "  " << 3*N_segments << endl;
         treefile << "2  0  1" << endl;
         for(vector<segment>::iterator it = tree.begin(); it != tree.end(); ++it){
-        	if ((*it).left != -1 && (*it).right != -1) {
+        	if (!is_terminal((*it).id)) {
                 treefile << "2  " << (*it).id + 1 << "  " << (*it).left + 1 << endl;
                 treefile << "2  " << (*it).id + 1 << "  " << (*it).right + 1 << endl;
         	}
@@ -264,9 +269,9 @@ void CCO::saveVTK(string filename){
 		treefile << "CELL_DATA  " << N_segments << endl;
 		treefile << "scalars radius float" << endl;
 		treefile << "LOOKUP_TABLE default" << endl;
-		treefile << get_radius(0) << endl;
+		treefile << get_radius(ROOT) << endl;
         for(vector<segment>::iterator it = tree.begin(); it != tree.end(); ++it){
-        	if ((*it).left != -1 && (*it).right != -1) {
+        	if (!is_terminal((*it).id)) {
                 treefile << get_radius((*it).left) << endl;
                 treefile << get_radius((*it).right) << endl;
         	}
@@ -281,9 +286,10 @@ void CCO::save(string filename){
     ofstream treefile;
     treefile.open(filename);
     if (treefile.is_open()) {
-        treefile << N_term << " " << ox << " " << oy << " " << oz << " "
-        << perfusion_pressure << " " << terminal_pressure << " "
-		<< perfusion_flow << " " << gamma << endl;
+        treefile << N_term << " " << N_con << " "
+        		 << ox << " " << oy << " " << oz << " "
+				 << perfusion_pressure << " " << terminal_pressure << " "
+				 << perfusion_flow << " " << gamma << endl;
         for(vector<segment>::iterator it = tree.begin(); it != tree.end(); ++it){
             treefile << (*it).x << " " << (*it).y << " " << (*it).z << " " 
             << (*it).up << " " << (*it).left << " " << (*it).right << " " 
@@ -303,7 +309,7 @@ void CCO::open(string filename){
     if (treefile.is_open()) {
         getline(treefile, line);
         istringstream iss(line);
-        iss >> N_term >> ox >> oy >>  oz >> perfusion_pressure
+        iss >> N_term >> N_con >> ox >> oy >>  oz >> perfusion_pressure
         >> terminal_pressure >> perfusion_flow >> gamma;
         tree.reserve(2*N_term - 1);
         int i = 0;
