@@ -159,56 +159,40 @@ void ArterialTree::update(int id){
     }
 }
 
-vector<int> ArterialTree::vicinity(double x, double y, double z, int N_con, vector<double> &distance){
-	struct temp{
-		int i;
-		double d;
+vector<int> ArterialTree::vicinity(double x, double y, double z, int N_con){
+	struct distance_index{
+		int id;
+		double dist;
 	};
-	temp aux;
+
+    struct {
+        bool operator()(distance_index a, distance_index b) const
+        {
+            return a.dist < b.dist;
+        }
+    }comparison_function;
+
+	distance_index aux;
+	vector<distance_index> di;
 	vector<int> v;
-	vector<temp> dist;
-	//distance = new vector<double>;
-	int id_min_dist = ROOT;
 	int n = N_con < tree.size() ? N_con : tree.size();
-	double sdist;
-	//cout << "n = " << n << endl;
-	//cout << x << ", " << y << ", " << z << endl;
 
 	for(vector<segment>::iterator it = tree.begin(); it != tree.end(); ++it){
-		sdist = ((*it).x - x)*((*it).x - x) + ((*it).y - y)*((*it).y - y)
+		aux.id = (*it).id;
+		//We just need sort the distance in ascendent order.
+		//We can sort the values of (x - x0)^2 + (y - y0)^2 + (z - z0)^2
+		//instead of sqrt((x - x0)^2 + (y - y0)^2 + (z - z0)^2).
+		//This way we use one less operation.
+		aux.dist = ((*it).x - x)*((*it).x - x) + ((*it).y - y)*((*it).y - y)
 				+ ((*it).z - z)*((*it).z - z);
-		aux.i = (*it).id;
-		aux.d = sdist;
-		dist.push_back(aux);
-		//cout << sdist << ", " << (*it).id << ", " << (*it).x << ", " << (*it).y << ", " << (*it).z << endl;
+		di.push_back(aux);
+	}
 
-		/*
-		if ((*it).id == ROOT) {
-			id_min_dist = 0;
-			smin_dist = sdist;
-		} else {
-			if (sdist < smin_dist) {
-				id_min_dist = (*it).id;
-				smin_dist = sdist;
-			}
-		}
-		*/
-	}
-	//cout << "dist.size() = " << dist.size() << endl;
-    struct {
-        bool operator()(temp a, temp b) const
-        {
-            return a.d < b.d;
-        }
-    } customLess;
-	partial_sort(dist.begin(), dist.begin() + n, dist.end(), customLess);
+	partial_sort(di.begin(), di.begin() + n, di.end(), comparison_function);
+
 	for(int i = 0; i < n; i++){
-		v.push_back(dist[i].i);
-		//distance->push_back(dist[i].d);
-		distance.push_back(dist[i].d);
+		v.push_back(di[i].id);
 	}
-	//cout << id_min_dist << ", " << smin_dist << endl;
-	//cout << "---" << endl;
 	return v;
 }
 
@@ -363,6 +347,11 @@ int ArterialTree::get_tree_size(void){
 
 segment ArterialTree::get_segment(int id){
 	return tree[id];
+}
+
+vector<double> ArterialTree::get_segement_distal_end(int id){
+	vector<double> v = {tree[id].x, tree[id].y, tree[id].z};
+	return v;
 }
 
 

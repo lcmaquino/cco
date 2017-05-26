@@ -15,26 +15,16 @@ CCO::CCO(int Nt, int Nc, double pperf, double pterm, double Qperf, double gam) {
 
 	N_term = Nt;
 	N_con = Nc;
-
 	gen.seed(rd());
-
-	//do {
-		x = dis(gen);
-		y = dis(gen);
-		z = dis(gen);
-	//}while(isnan(x) || isnan(y) || isnan(z));
-
-    //cout << "Origin: " << x << ", " << y << ", " << z << endl;
+	//Generate a random origin.
+	x = 0.0; //x = dis(gen);
+	y = 0.0; //y = dis(gen);
+	z = 0.0; //z = dis(gen);
 	atree = new ArterialTree(Nt, x, y, z, pperf, pterm, Qperf, gam);
-
-	//do {
-		x = dis(gen);
-		y = dis(gen);
-		z = dis(gen);
-	//}while(isnan(x) || isnan(y) || isnan(z));
-
-    //cout << "First root: " << x << ", " << y << ", " << z << endl;
-
+	//Generate a random root distal end.
+	x = dis(gen);
+	y = dis(gen);
+	z = dis(gen);
 	atree->insert_root(x, y, z);
 }
 
@@ -45,68 +35,57 @@ CCO::~CCO() {
 void CCO::generate_tree(void){
 	double x, y, z;
 	vector<int> vic;
-	int id, k, ntry = 20;
-	double T, T_min, dtemp;
+	vector<double> point;
+	int id, att, attempts = 20;
+	double d, T_min, T;
 	for (int i = 0; i < N_term - 1; i++){
-		k = 0;
+		att = 0;
+		//Try to generate a random new segment that has
+		//at least d_min distance of all segments generated
+		//so far.
 		do {
-			vector<double> dist;
 			x = dis(gen);
 			y = dis(gen);
 			z = dis(gen);
-		//cout << "Random Point: " << x << ", " << y << ", " << z << endl;
-			vic = atree->vicinity(x, y, z, N_con, dist);
-			dtemp = dist[0];
-			/*
-			if (k == 0) {
-				for (int v : vic) {
-					cout << v << " ";
-				}
-				cout << endl;
-				for (double d : dist) {
-					cout << d << " ";
-				}
-				cout << endl;
-			}*/
-			k++;
-		}while(dtemp < d_min && k < ntry);
-		//cout << "Minimum distance: " << dtemp << " d_min = " << d_min << " Tries: " << k << endl;
-		//}while(k < ntry);
-		for(unsigned int j = 0; j < vic.size(); j++){
-			//cout << vic[j] << " ";
-			if (j == 0){
-				id = vic[0];
-				atree->insert(vic[0], x, y, z);
-				T_min = evaluate_target_function();
-				//cout << T_min << " ";
-			}else{
-				atree->insert(vic[j], x, y, z);
-				T = evaluate_target_function();
-				if (T < T_min) {
-					id = vic[j];
-					T = T_min;
-				}
-				//cout << T << " ";
+			//Get the N_con segments near to (x, y ,z).
+			vic = atree->vicinity(x, y, z, N_con);
+			//vic[0] is nearest segment.
+			point = atree->get_segement_distal_end(vic[0]);
+			d = sqrt( (x - point[0])*(x - point[0])
+					+ (y - point[1])*(y - point[1])
+					+ (z - point[2])*(z - point[2]));
+			att++;
+		}while(d < d_min && att < attempts);
+
+		//Find where to connect the new segment
+		//so the target function is minimum.
+		id = vic[0];
+		atree->insert(vic[0], x, y, z);
+		T_min = evaluate_target_function();
+		atree->remove();
+		for(unsigned int j = 1; j < vic.size(); j++){
+			atree->insert(vic[j], x, y, z);
+			T = evaluate_target_function();
+			if (T < T_min) {
+				id = vic[j];
+				T = T_min;
 			}
 			atree->remove();
 		}
-		//cout << endl;
-		//cout << "id = " << id << " T_min = " << T_min << endl;
+
+		//Insert the new segment.
 		atree->insert(id, x, y, z);
+		//Update d_min.
 		d_min = sqrt(3.0)*pow(volume/atree->number_of_terminals(atree->ROOT), 1.0/3.0);
-		//atree->display();
-		//cout << "---" << endl;
 	}
 }
 
 double CCO::evaluate_target_function(void){
-	int i, size = atree->get_tree_size();
+	unsigned int i, size = atree->get_tree_size();
 	double T = 0.0, radius, length;
 	for(i = atree->ROOT; i < size; i++){
 		radius = atree->get_radius(i);
 		length = atree->get_length(i);
-		//if (isnan(radius) || isnan(length))
-		//	cout << i << ", " <<radius << ", " << length << endl;
 		T += length*radius*radius;
 	}
 	return T;
