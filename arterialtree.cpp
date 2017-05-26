@@ -59,11 +59,6 @@ void ArterialTree::insert(int id, double x, double y, double z){
         tree[id].z = (tree[id].z + tree[tree[id].up].z)/2.0;
     }
 
-    //if (isnan(tree[id].x) || isnan(tree[id].y) || isnan(tree[id].z)) {
-    //	cout << "Updated Point " << id << ": " << tree[id].x << ", " << tree[id].y << ", " << tree[id].z << endl;
-    //	cout << "Updated Point " << icon.id << ": " << icon.x << ", " << icon.y << ", " << icon.z << endl;
-    //}
-
     inew.id = tree.size();
     inew.up = id;
     inew.left = TERMINAL_ENDS;
