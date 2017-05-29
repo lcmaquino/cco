@@ -1,12 +1,11 @@
 #include "arterialtree.h"
-#include <random>
+#include "randompoint.h"
 
 class CCO {
 private:
-    mt19937 gen;
-    uniform_real_distribution<double> dis;
-    int N_term, N_con;
     ArterialTree *atree;
+    RandomPoint rpoint;
+    int N_term, N_con;
     double volume = 1.0, d_min = sqrt(3.0);
 public:
     CCO(string filename);

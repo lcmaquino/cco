@@ -11,20 +11,14 @@ CCO::CCO(string filename) {
 
 CCO::CCO(int Nt, int Nc, double pperf, double pterm, double Qperf, double gam) {
 	double x, y, z;
-	random_device rd;
 
 	N_term = Nt;
 	N_con = Nc;
-	gen.seed(rd());
 	//Generate a random origin.
-	x = 0.0; //x = dis(gen);
-	y = 0.0; //y = dis(gen);
-	z = 0.0; //z = dis(gen);
+    x=0.0; y=0.0; z=0.0;//rpoint.generate(x, y, z);
 	atree = new ArterialTree(Nt, x, y, z, pperf, pterm, Qperf, gam);
 	//Generate a random root distal end.
-	x = dis(gen);
-	y = dis(gen);
-	z = dis(gen);
+    rpoint.generate(x, y, z);
 	atree->insert_root(x, y, z);
 }
 
@@ -44,9 +38,7 @@ void CCO::generate_tree(void){
 		//at least d_min distance of all segments generated
 		//so far.
 		do {
-			x = dis(gen);
-			y = dis(gen);
-			z = dis(gen);
+            rpoint.generate(x, y, z);
 			//Get the N_con segments near to (x, y ,z).
 			vic = atree->vicinity(x, y, z, N_con);
 			//vic[0] is nearest segment.
