@@ -81,23 +81,6 @@ void ArterialTree::insert(int id, double x, double y, double z){
 void ArterialTree::remove(void){
 	int id = tree.size() - 2, id_left = tree[id].left, id_right = tree[id].right,
 		id_up = tree[id].up;
-	/*
-    if (id == 1) {
-    	tree[id_up].x *= 2.0;
-    	tree[id_up].y *= 2.0;
-    	tree[id_up].z *= 2.0;
-    	tree[id_up].x -= ox;
-    	tree[id_up].y -= oy;
-    	tree[id_up].z -= oz;
-    }else{
-    	tree[id_up].x *= 2.0;
-    	tree[id_up].y *= 2.0;
-    	tree[id_up].z *= 2.0;
-    	tree[id_up].x -= tree[tree[id_up].up].x;
-    	tree[id_up].y -= tree[tree[id_up].up].y;
-    	tree[id_up].z -= tree[tree[id_up].up].z;
-    }
-    */
 
 	tree[id_up].x = tree[id].x;
 	tree[id_up].y = tree[id].y;
@@ -348,5 +331,3 @@ vector<double> ArterialTree::get_segement_distal_end(int id){
 	vector<double> v = {tree[id].x, tree[id].y, tree[id].z};
 	return v;
 }
-
-
